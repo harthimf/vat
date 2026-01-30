@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>حاسبة إجمالي فواتير PDF + ضريبة 15%</title>
+
+  <!-- Font -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600&display=swap');
+  </style>
+
+  <style>
+    :root{
+      --bg:#F7FCFF;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --primary:#636BB1;
+      --accent:#FBE167;
+      --info:#E8F9FF;
+      --danger:#ef4444;
+      --ok:#16a34a;
+      --shadow: 0 10px 25px rgba(0,0,0,.06);
+      --radius:18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: Rubik, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .wrap{
+      max-width:1100px;
+      margin:24px auto;
+      padding:0 16px 40px;
+    }
+    header{
+      background: linear-gradient(135deg, var(--info), #fff);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:18px 18px;
+      box-shadow: var(--shadow);
+    }
+    h1{
+      margin:0 0 6px;
+      font-size:20px;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width: 880px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:14px;
+      box-shadow: var(--shadow);
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+    .btn{
+      background: var(--primary);
+      color:#fff;
+      border:none;
+      padding:10px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+    }
+    .btn.secondary{
+      background:#fff;
+      color:var(--primary);
+      border:1px solid rgba(99,107,177,.35);
+    }
+    .btn.danger{
+      background: var(--danger);
+    }
+    .file{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex:1;
+      min-width:260px;
+    }
+    input[type="file"]{
+      width:100%;
+      padding:10px;
+      border:1px dashed rgba(99,107,177,.5);
+      border-radius:14px;
+      background: #fff;
+    }
+    .toggle{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      min-width:260px;
+    }
+    .toggle label{
+      font-size:13px;
+      color: var(--muted);
+      line-height:1.5;
+    }
+    .toggle input{
+      transform: scale(1.1);
+    }
+    .summary{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 720px){
+      .summary{ grid-template-columns: 1fr; }
+    }
+    .kpi{
+      background: linear-gradient(135deg, #fff, var(--info));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:12px;
+    }
+    .kpi .label{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:6px;
+    }
+    .kpi .value{
+      font-size:20px;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius: var(--radius);
+      border:1px solid var(--border);
+      background:#fff;
+      box-shadow: var(--shadow);
+      margin-top:14px;
+    }
+    thead th{
+      text-align:right;
+      font-size:12px;
+      color:var(--muted);
+      background: #f9fafb;
+      border-bottom:1px solid var(--border);
+      padding:10px 10px;
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--border);
+      vertical-align:top;
+      font-size:13px;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:600;
+      border:1px solid var(--border);
+      background:#fff;
+      white-space:nowrap;
+    }
+    .pill.ok{ border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); color: var(--ok); }
+    .pill.warn{ border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.10); color: #b45309; }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      direction:ltr;
+      unicode-bidi: plaintext;
+      color:#111827;
+    }
+    .muted{ color: var(--muted); font-size:12px; }
+    .small{ font-size:12px; }
+    .num{ text-align:left; direction:ltr; unicode-bidi: plaintext; }
+    .edit{
+      width:130px;
+      padding:8px 10px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline:none;
+      font-family: inherit;
+      direction:ltr;
+    }
+    .row-actions{
+      display:flex;
+      gap:8px;
+      justify-content:flex-start;
+    }
+    details{
+      margin-top:8px;
+      background: #fff;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding:10px 12px;
+    }
+    details summary{
+      cursor:pointer;
+      color: var(--primary);
+      font-weight:600;
+      font-size:13px;
+    }
+    pre{
+      margin:10px 0 0;
+      background:#0b1020;
+      color:#dbeafe;
+      padding:12px;
+      border-radius:14px;
+      overflow:auto;
+      max-height:240px;
+      direction:ltr;
+    }
+    .note{
+      margin-top:12px;
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.8;
+    }
+  </style>
+
+  <!-- pdf.js (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.js"></script>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <h1>رفع فواتير PDF → استخراج الإجمالي النهائي + ضريبة 15%</h1>
+      <p class="sub">
+        ارفع ملفات PDF (متعددة)، وسيتم محاولة استخراج قيمة <b>الإجمالي النهائي</b> من كل فاتورة.
+        بعدها سيتم حساب ضريبة 15% وإظهار الإجماليات النهائية لجميع الفواتير.
+        <br>
+        إذا كان الـPDF مسح ضوئي (بدون نص)، عدّل خانة “تعديل الإجمالي” يدويًا.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <div class="controls">
+            <div class="file">
+              <input id="fileInput" type="file" accept="application/pdf" multiple />
+            </div>
+            <button class="btn" id="processBtn">معالجة الملفات</button>
+            <button class="btn secondary" id="exportBtn" disabled>تصدير CSV</button>
+            <button class="btn danger" id="clearBtn">مسح الكل</button>
+          </div>
+
+          <div class="note">
+            • يدعم العربية/الإنجليزية في الكلمات المفتاحية (Total / Grand Total / Amount Due / الإجمالي النهائي ...).<br>
+            • خيار الضريبة بالأسفل يحدد هل الإجمالي المستخرج <b>شامل الضريبة</b> أم <b>قبل الضريبة</b>.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="toggle">
+            <input id="includesVat" type="checkbox" checked />
+            <label for="includesVat">
+              الإجمالي المستخرج من الفاتورة <b>شامل الضريبة</b> (15%)؟<br>
+              <span class="muted">إذا أزلت العلامة: سيتم اعتباره قبل الضريبة ثم تُضاف 15%.</span>
+            </label>
+          </div>
+          <div style="height:10px"></div>
+          <div class="summary">
+            <div class="kpi">
+              <div class="label">إجمالي قبل الضريبة (Net)</div>
+              <div class="value mono" id="sumNet">0.00</div>
+            </div>
+            <div class="kpi">
+              <div class="label">إجمالي الضريبة 15% (VAT)</div>
+              <div class="value mono" id="sumVat">0.00</div>
+            </div>
+            <div class="kpi">
+              <div class="label">الإجمالي النهائي (Gross)</div>
+              <div class="value mono" id="sumGross">0.00</div>
+            </div>
+          </div>
+          <div class="note">
+            عدد الفواتير: <b id="count">0</b>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <table aria-label="Invoices table">
+      <thead>
+        <tr>
+          <th style="width:240px">الملف</th>
+          <th>الطريقة</th>
+          <th class="num">الإجمالي المستخرج</th>
+          <th class="num">قبل الضريبة</th>
+          <th class="num">ضريبة 15%</th>
+          <th class="num">الإجمالي النهائي</th>
+          <th style="width:160px">تعديل الإجمالي</th>
+          <th style="width:120px">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr>
+          <td colspan="8" class="muted">لم يتم رفع ملفات بعد.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <details>
+      <summary>عرض سجلات الاستخراج (للتشخيص)</summary>
+      <pre id="log"></pre>
+    </details>
+  </div>
+
+<script>
+  // --- إعداد pdf.js worker ---
+  // قد تحتاج لتغيير الإصدار إذا غيّرت رابط pdf.js بالأعلى.
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.js";
+  }
+
+  const TAX_RATE = 0.15;
+
+  const fileInput = document.getElementById('fileInput');
+  const processBtn = document.getElementById('processBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const includesVatEl = document.getElementById('includesVat');
+
+  const tbody = document.getElementById('tbody');
+  const logEl = document.getElementById('log');
+
+  const sumNetEl = document.getElementById('sumNet');
+  const sumVatEl = document.getElementById('sumVat');
+  const sumGrossEl = document.getElementById('sumGross');
+  const countEl = document.getElementById('count');
+
+  /** نموذج بيانات لكل فاتورة */
+  let invoices = []; // {id, name, extractedTotal, overrideTotal, method, debugText, net, vat, gross}
+
+  function log(msg){
+    logEl.textContent += msg + "\n";
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function resetLog(){ logEl.textContent = ""; }
+
+  function formatMoney(n){
+    if (!Number.isFinite(n)) return "—";
+    return n.toFixed(2);
+  }
+
+  // تحويل الأرقام العربية إلى إنجليزية
+  function toLatinDigits(s){
+    const map = {
+      '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9',
+      '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'
+    };
+    return (s || "").replace(/[٠-٩۰-۹]/g, d => map[d] ?? d);
+  }
+
+  function normalizeNumberString(s){
+    // توحيد الفواصل العربية/الإنجليزية
+    let t = toLatinDigits(s);
+    t = t.replace(/[٬،]/g, ",");  // Arabic thousands separators / comma
+    t = t.replace(/[٫]/g, ".");   // Arabic decimal
+    // إزالة العملات والمسافات
+    t = t.replace(/(SAR|ر\.س|ريال|﷼|SR|\s)/gi, "");
+    // إزالة الفواصل كفاصل آلاف
+    t = t.replace(/,/g, "");
+    return t;
+  }
+
+  function parseNumber(s){
+    const t = normalizeNumberString(s);
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function findNumbersInText(text){
+    // يلتقط أرقام مثل 1,234.56 أو 1234.56 أو ١٢٣٤٫٥٦
+    const re = /([0-9٠-٩۰-۹]{1,3}(?:[,\s٬،][0-9٠-٩۰-۹]{3})*(?:[\.٫][0-9٠-٩۰-۹]{1,3})?|[0-9٠-٩۰-۹]+(?:[\.٫][0-9٠-٩۰-۹]{1,3})?)/g;
+    const out = [];
+    let m;
+    while ((m = re.exec(text)) !== null){
+      const n = parseNumber(m[1]);
+      if (n !== null) out.push(n);
+    }
+    return out;
+  }
+
+  // تجميع عناصر النص إلى سطور تقريبية اعتماداً على Y/X
+  function itemsToLines(items){
+    const sorted = [...items].sort((a,b)=>{
+      const ya = a.transform?.[5] ?? 0;
+      const yb = b.transform?.[5] ?? 0;
+      const xa = a.transform?.[4] ?? 0;
+      const xb = b.transform?.[4] ?? 0;
+      if (Math.abs(ya - yb) > 2) return yb - ya;
+      return xa - xb;
+    });
+
+    const lines = [];
+    let current = [];
+    let currentY = null;
+
+    for (const it of sorted){
+      const y = it.transform?.[5] ?? 0;
+      const str = (it.str || "").trim();
+      if (!str) continue;
+
+      if (currentY === null || Math.abs(y - currentY) <= 2){
+        current.push(str);
+        currentY = (currentY === null) ? y : (currentY + y) / 2;
+      } else {
+        lines.push(current.join(' ').replace(/\s+/g,' ').trim());
+        current = [str];
+        currentY = y;
+      }
+    }
+    if (current.length) lines.push(current.join(' ').replace(/\s+/g,' ').trim());
+    return lines.filter(Boolean);
+  }
+
+  function computeBreakdown(total, includesVat){
+    // total: الرقم المستخرج/المعدل (يمثل إما شامل الضريبة أو قبلها)
+    let net, vat, gross;
+    if (includesVat){
+      gross = total;
+      net = gross / (1 + TAX_RATE);
+      vat = gross - net;
+    } else {
+      net = total;
+      vat = net * TAX_RATE;
+      gross = net + vat;
+    }
+    return {net, vat, gross};
+  }
+
+  function chooseTotalFromLines(lines){
+    // كلمات مفتاحية مرتبة من الأقوى للأضعف
+    const strongKeywords = [
+      "الإجمالي النهائي","المجموع النهائي","إجمالي نهائي","المبلغ المستحق","المبلغ الإجمالي",
+      "Grand Total","Total Due","Amount Due","Invoice Total","Balance Due","Total Amount"
+    ];
+    const weakKeywords = [
+      "الإجمالي","المجموع","Total","TOTAL"
+    ];
+    // كلمات نفضل تجاهلها (تدل على أن الرقم ليس الإجمالي النهائي)
+    const avoid = ["vat","v.a.t","ضريبة","tax","الضريبة","قيمة الضريبة","vat amount"];
+
+    const L = lines.length;
+    let best = null; // {score, value, method, line}
+
+    function scoreHit(isStrong, idx){
+      // نعطي أفضلية للسطور المتأخرة (عادة الإجمالي في آخر الفاتورة)
+      const pos = (idx / Math.max(1, L-1));
+      return (isStrong ? 10 : 6) + (pos * 3);
+    }
+
+    function tryLine(idx, isStrong){
+      const line = lines[idx] || "";
+      const low = line.toLowerCase();
+
+      // لو السطر يتكلم عن الضريبة فقط نتجنب
+      if (avoid.some(a => low.includes(a))) return;
+
+      let nums = findNumbersInText(line);
+
+      // إذا لم نجد، جرب السطر التالي ثم السابق
+      if (!nums.length && lines[idx+1]) nums = findNumbersInText(lines[idx+1]);
+      if (!nums.length && lines[idx-1]) nums = findNumbersInText(lines[idx-1]);
+
+      if (!nums.length) return;
+
+      // غالباً الإجمالي هو الأكبر في هذا السطر/المجاور
+      const value = Math.max(...nums);
+      const sc = scoreHit(isStrong, idx);
+
+      if (!best || sc > best.score){
+        best = {score: sc, value, method: isStrong ? "كلمة مفتاحية قوية" : "كلمة مفتاحية عامة", line};
+      }
+    }
+
+    // مر على السطور وابحث عن الكلمات القوية أولاً
+    for (let i=0;i<L;i++){
+      const line = lines[i];
+      for (const k of strongKeywords){
+        if (line.includes(k)){
+          tryLine(i, true);
+        }
+      }
+    }
+    if (best) return best;
+
+    // ثم الكلمات العامة
+    for (let i=0;i<L;i++){
+      const line = lines[i];
+      for (const k of weakKeywords){
+        if (line.includes(k)){
+          tryLine(i, false);
+        }
+      }
+    }
+    if (best) return best;
+
+    // fallback: اختر أكبر رقم في المستند (قد يخطئ لذلك نضع "تخمين")
+    const allNums = [];
+    for (const line of lines){
+      const low = line.toLowerCase();
+      if (avoid.some(a => low.includes(a))) continue;
+      allNums.push(...findNumbersInText(line));
+    }
+    if (allNums.length){
+      const value = Math.max(...allNums);
+      return {score: 1, value, method: "تخمين (أكبر رقم)", line: "—"};
+    }
+    return null;
+  }
+
+  async function extractTextFromPdf(arrayBuffer){
+    const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
+    const pdf = await loadingTask.promise;
+
+    const allLines = [];
+    for (let p = 1; p <= pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const textContent = await page.getTextContent();
+      const lines = itemsToLines(textContent.items || []);
+      allLines.push(...lines);
+    }
+    return allLines;
+  }
+
+  async function processFile(file){
+    const id = crypto.randomUUID();
+    const buf = await file.arrayBuffer();
+
+    log(`— معالجة: ${file.name}`);
+
+    let lines = [];
+    try{
+      lines = await extractTextFromPdf(buf);
+      log(`  • تم استخراج ${lines.length} سطر نصي تقريباً`);
+    }catch(e){
+      log(`  ✗ فشل قراءة PDF (قد يكون تالف أو محمي): ${e?.message || e}`);
+      return {
+        id, name:file.name,
+        extractedTotal:null,
+        overrideTotal:null,
+        method:"فشل القراءة",
+        debugText:"",
+        net:null, vat:null, gross:null
+      };
+    }
+
+    const pick = chooseTotalFromLines(lines);
+
+    let extractedTotal = pick?.value ?? null;
+    let method = pick ? pick.method : "لم يتم العثور على إجمالي";
+    let debugText = lines.slice(0, 250).join("\n"); // مقتطف للتشخيص
+
+    if (extractedTotal !== null){
+      log(`  ✓ إجمالي مستخرج: ${extractedTotal} (${method})`);
+    } else {
+      log(`  ⚠ لم يتم العثور على الإجمالي — استخدم التعديل اليدوي`);
+    }
+
+    const includesVat = includesVatEl.checked;
+    const baseTotal = extractedTotal ?? 0;
+    const breakdown = (extractedTotal !== null) ? computeBreakdown(baseTotal, includesVat) : {net:null, vat:null, gross:null};
+
+    return {
+      id,
+      name:file.name,
+      extractedTotal,
+      overrideTotal:null,
+      method,
+      debugText,
+      net: breakdown.net,
+      vat: breakdown.vat,
+      gross: breakdown.gross
+    };
+  }
+
+  function render(){
+    tbody.innerHTML = "";
+
+    if (!invoices.length){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="8" class="muted">لم يتم رفع ملفات بعد.</td>`;
+      tbody.appendChild(tr);
+      exportBtn.disabled = true;
+      updateSummary();
+      return;
+    }
+
+    for (const inv of invoices){
+      const totalUsed = (inv.overrideTotal !== null && Number.isFinite(inv.overrideTotal))
+        ? inv.overrideTotal
+        : inv.extractedTotal;
+
+      let net = null, vat = null, gross = null;
+      if (totalUsed !== null && Number.isFinite(totalUsed)){
+        const b = computeBreakdown(totalUsed, includesVatEl.checked);
+        net = b.net; vat = b.vat; gross = b.gross;
+      }
+
+      inv.net = net; inv.vat = vat; inv.gross = gross;
+
+      const statusPill = (() => {
+        if (inv.method === "كلمة مفتاحية قوية") return `<span class="pill ok">مطابق غالباً</span>`;
+        if (inv.method === "كلمة مفتاحية عامة") return `<span class="pill warn">محتمل</span>`;
+        if (inv.method.startsWith("تخمين")) return `<span class="pill warn">تخمين</span>`;
+        if (inv.method === "فشل القراءة") return `<span class="pill warn">فشل</span>`;
+        return `<span class="pill warn">يدوي</span>`;
+      })();
+
+      const extractedTxt = (inv.extractedTotal === null) ? "—" : formatMoney(inv.extractedTotal);
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div style="font-weight:700">${escapeHtml(inv.name)}</div>
+          <div class="muted small">${inv.extractedTotal === null ? "لم يُستخرج الإجمالي تلقائياً" : "تم استخراج الإجمالي تلقائياً"}</div>
+        </td>
+        <td>
+          ${statusPill}
+          <div class="muted small" style="margin-top:6px">${escapeHtml(inv.method)}</div>
+        </td>
+        <td class="num mono">${extractedTxt}</td>
+        <td class="num mono">${net === null ? "—" : formatMoney(net)}</td>
+        <td class="num mono">${vat === null ? "—" : formatMoney(vat)}</td>
+        <td class="num mono">${gross === null ? "—" : formatMoney(gross)}</td>
+        <td>
+          <input
+            class="edit mono"
+            inputmode="decimal"
+            placeholder="مثال: 1250.00"
+            value="${inv.overrideTotal === null ? "" : inv.overrideTotal}"
+            data-id="${inv.id}"
+          />
+          <div class="muted small" style="margin-top:6px">اتركها فارغة لاعتماد المستخرج</div>
+        </td>
+        <td>
+          <div class="row-actions">
+            <button class="btn secondary small" data-action="show" data-id="${inv.id}">نص</button>
+            <button class="btn danger small" data-action="remove" data-id="${inv.id}">حذف</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    exportBtn.disabled = false;
+    updateSummary();
+  }
+
+  function updateSummary(){
+    const nets = invoices.map(i => i.net).filter(Number.isFinite);
+    const vats = invoices.map(i => i.vat).filter(Number.isFinite);
+    const gross = invoices.map(i => i.gross).filter(Number.isFinite);
+
+    const sNet = nets.reduce((a,b)=>a+b,0);
+    const sVat = vats.reduce((a,b)=>a+b,0);
+    const sGross = gross.reduce((a,b)=>a+b,0);
+
+    sumNetEl.textContent = formatMoney(sNet);
+    sumVatEl.textContent = formatMoney(sVat);
+    sumGrossEl.textContent = formatMoney(sGross);
+    countEl.textContent = String(invoices.length);
+  }
+
+  function escapeHtml(str){
+    return (str || "").replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[s]));
+  }
+
+  tbody.addEventListener('input', (e)=>{
+    const el = e.target;
+    if (!el.classList.contains('edit')) return;
+    const id = el.getAttribute('data-id');
+    const inv = invoices.find(x => x.id === id);
+    if (!inv) return;
+
+    const v = el.value.trim();
+    if (!v){
+      inv.overrideTotal = null;
+    } else {
+      const n = parseNumber(v);
+      inv.overrideTotal = (n === null) ? null : n;
+    }
+    render();
+  });
+
+  tbody.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const action = btn.getAttribute('data-action');
+    const id = btn.getAttribute('data-id');
+    const inv = invoices.find(x => x.id === id);
+    if (!inv) return;
+
+    if (action === 'remove'){
+      invoices = invoices.filter(x => x.id !== id);
+      render();
+      return;
+    }
+
+    if (action === 'show'){
+      // عرض مقتطف النص (أول 250 سطر)
+      const text = inv.debugText || "(لا يوجد نص)";
+      alert(`مقتطف نص من ${inv.name}:\n\n${text.substring(0, 4000)}\n\n(قد يكون النص أطول)`);
+      return;
+    }
+  });
+
+  includesVatEl.addEventListener('change', () => {
+    // فقط إعادة الحساب
+    render();
+  });
+
+  processBtn.addEventListener('click', async ()=>{
+    const files = [...(fileInput.files || [])];
+    if (!files.length){
+      alert("اختر ملفات PDF أولاً.");
+      return;
+    }
+
+    resetLog();
+    processBtn.disabled = true;
+    processBtn.textContent = "جارٍ المعالجة...";
+
+    try{
+      const results = [];
+      for (const f of files){
+        const inv = await processFile(f);
+        results.push(inv);
+      }
+      invoices = results;
+      render();
+      log("— انتهت المعالجة.");
+    } finally {
+      processBtn.disabled = false;
+      processBtn.textContent = "معالجة الملفات";
+    }
+  });
+
+  clearBtn.addEventListener('click', ()=>{
+    invoices = [];
+    fileInput.value = "";
+    resetLog();
+    render();
+  });
+
+  exportBtn.addEventListener('click', ()=>{
+    if (!invoices.length) return;
+
+    const rows = [
+      ["File","Method","ExtractedTotal","OverrideTotal","Net","VAT15","Gross"].join(",")
+    ];
+
+    for (const inv of invoices){
+      const totalUsed = (inv.overrideTotal !== null && Number.isFinite(inv.overrideTotal))
+        ? inv.overrideTotal
+        : inv.extractedTotal;
+
+      const net = inv.net, vat = inv.vat, gross = inv.gross;
+
+      rows.push([
+        csvSafe(inv.name),
+        csvSafe(inv.method),
+        inv.extractedTotal ?? "",
+        inv.overrideTotal ?? "",
+        Number.isFinite(net) ? net.toFixed(2) : "",
+        Number.isFinite(vat) ? vat.toFixed(2) : "",
+        Number.isFinite(gross) ? gross.toFixed(2) : ""
+      ].join(","));
+    }
+
+    const csv = rows.join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "invoices_summary.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  function csvSafe(s){
+    const t = String(s ?? "");
+    if (/[,"\n]/.test(t)) return `"${t.replace(/"/g,'""')}"`;
+    return t;
+  }
+
+  // أول رندر
+  render();
+</script>
+</body>
+</html>
